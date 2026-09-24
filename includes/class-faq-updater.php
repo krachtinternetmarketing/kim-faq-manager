@@ -26,10 +26,14 @@ class FAQM_Updater {
     const REPO = 'krachtinternetmarketing/kim-faq-manager';
 
     /** Cache-duur van de release-check (in seconden) */
-    const CACHE_TTL = 6 * HOUR_IN_SECONDS;
+    const CACHE_TTL = 1 * HOUR_IN_SECONDS;
 
     private static string $plugin_file = '';   // bijv. "kim-faq-manager/faq-manager.php"
     private static string $plugin_slug = '';   // bijv. "kim-faq-manager"
+
+    /** In-request memo, zodat we per verzoek hooguit één GitHub-call doen. */
+    private static ?array $memo = null;
+    private static bool $memo_set = false;
 
     public static function init(): void {
         // Basename t.o.v. de plugins-map, bepaald vanuit het hoofdbestand.
@@ -48,16 +52,38 @@ class FAQM_Updater {
     }
 
     /**
+     * Draait dit verzoek een geforceerde update-controle?
+     * - Klik op "Opnieuw controleren" (wp-admin/update-core.php?force-check=1)
+     * - WP-CLI (wp plugin update / wp plugin list)
+     * In die gevallen slaan we onze eigen cache over.
+     */
+    private static function is_force_check(): bool {
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            return true;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        return isset( $_GET['force-check'] );
+    }
+
+    /**
      * Haal de laatste release op van GitHub (gecachet).
      * @return array{version:string,zip:string,html_url:string,body:string,published:string}|null
      */
     private static function get_latest_release( bool $force = false ): ?array {
         $key = self::cache_key();
 
+        // In-request memo: binnen één verzoek nooit twee keer GitHub raadplegen,
+        // ook niet bij een force-check (filter kan meermaals afgaan per verzoek).
+        if ( self::$memo_set ) {
+            return self::$memo;
+        }
+
         if ( ! $force ) {
             $cached = get_transient( $key );
             if ( is_array( $cached ) ) {
-                return $cached ?: null; // lege array = "geen release / fout", ook cachen
+                self::$memo     = $cached ?: null;
+                self::$memo_set = true;
+                return self::$memo; // lege array = "geen release / fout", ook gecachet
             }
         }
 
@@ -77,12 +103,14 @@ class FAQM_Updater {
 
         if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
             set_transient( $key, [], self::CACHE_TTL ); // fout: even niet blijven proberen
+            self::$memo = null; self::$memo_set = true;
             return null;
         }
 
         $data = json_decode( wp_remote_retrieve_body( $response ), true );
         if ( ! is_array( $data ) || empty( $data['tag_name'] ) ) {
             set_transient( $key, [], self::CACHE_TTL );
+            self::$memo = null; self::$memo_set = true;
             return null;
         }
 
@@ -110,6 +138,7 @@ class FAQM_Updater {
         ];
 
         set_transient( $key, $release, self::CACHE_TTL );
+        self::$memo = $release; self::$memo_set = true;
         return $release;
     }
 
@@ -121,7 +150,11 @@ class FAQM_Updater {
             return $transient;
         }
 
-        $release = self::get_latest_release();
+        // Bij een handmatige "Opnieuw controleren" (force-check) of via WP-CLI:
+        // sla de cache over en haal direct een verse release op.
+        $force = self::is_force_check();
+
+        $release = self::get_latest_release( $force );
         if ( ! $release || empty( $release['zip'] ) ) {
             return $transient;
         }

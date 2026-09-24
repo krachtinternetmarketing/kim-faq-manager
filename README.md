@@ -1,6 +1,6 @@
 # FAQ Manager — WordPress Plugin
 
-Versie 3.12.0 | Vereist WordPress 6.0+ en PHP 8.0+
+Versie 3.13.0 | Vereist WordPress 6.0+ en PHP 8.0+
 
 ---
 
@@ -32,8 +32,9 @@ bijwerken — net als elke andere plugin. Geen externe library nodig.
 4. Voeg de plugin-zip als **asset** toe aan de release. De map ín de zip moet
    `kim-faq-manager` heten. (Zonder asset gebruikt de plugin automatisch de
    "Source code (zip)"; de mapnaam wordt bij installatie sowieso rechtgezet.)
-5. Publiceer de release. Binnen enkele uren zien alle sites de update; forceren
-   kan via **Dashboard → Updates → Opnieuw controleren**.
+5. Publiceer de release. Sites zien de update automatisch (cache max 1 uur);
+   direct forceren kan via **Dashboard → Updates → Opnieuw controleren** — die
+   knop haalt vanaf 3.13.0 meteen een verse release op.
 
 Het versienummer van de plugin is leidend: is de release-versie hoger dan de
 geïnstalleerde versie, dan wordt de update aangeboden.
