@@ -3,7 +3,7 @@
  * Plugin Name: Kracht Internet Marketing - FAQ Manager
  * Plugin URI:  https://www.krachtinternetmarketing.nl
  * Description: Beheer FAQ-vragen met lange én korte antwoorden. Koppel vragen aan WooCommerce-producten. Volledig voorzien van Schema.org FAQPage markup voor Google en AI.
- * Version:     3.12.0
+ * Version:     3.12.1
  * Author:      Kracht Internet Marketing
  * Author URI:  https://www.krachtinternetmarketing.nl
  * Text Domain: faq-manager
@@ -99,7 +99,7 @@ defined( 'ABSPATH' ) || exit;
  */
 
 
-define( 'FAQM_VERSION',   '3.12.0' );
+define( 'FAQM_VERSION',   '3.12.1' );
 define( 'FAQM_PATH',      plugin_dir_path( __FILE__ ) );
 define( 'FAQM_URL',       plugin_dir_url( __FILE__ ) );
 define( 'FAQM_POST_TYPE', 'faq_item' );
